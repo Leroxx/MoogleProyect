@@ -1,0 +1,15 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <ItemGroup>
+    <ProjectReference Include="..\MoogleDocs\MoogleDocs.csproj" />
+    <ProjectReference Include="..\MoogleTools\MoogleTools.csproj" />
+    <ProjectReference Include="..\SpanishStemmer\SpanishStemmer.csproj" />
+  </ItemGroup>
+
+  <PropertyGroup>
+    <TargetFramework>net6.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+  </PropertyGroup>
+
+</Project>
