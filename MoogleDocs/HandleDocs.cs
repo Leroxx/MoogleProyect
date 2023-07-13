@@ -36,7 +36,7 @@ public class HandleDocs
 
       while (aux < check.Length)
       {
-         if (check[0] == names[0])
+         if (check[aux] == names[aux])
             aux++;
          else
             return false;
