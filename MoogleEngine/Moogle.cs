@@ -1,4 +1,5 @@
-﻿using MoogleDocs;
+﻿using System;
+using MoogleDocs;
 using MoogleTools;
 using SpanishStemmer;
 using System.Text.RegularExpressions;
@@ -31,7 +32,7 @@ public static class Moogle
       query = tuple.Item2;
 
       /// Lemantizando el query y llenado el diccionario si no estan contenidas en el las palabras del query
-      StemmingQuery(query);
+      query = StemmingQuery(query);
       FillDictionary(query, HandleDocs.dictionary, texts);
 
       if (dictionary_items != HandleDocs.dictionary.Count)
@@ -117,7 +118,7 @@ public static class Moogle
       }
    }
 
-   public static void StemmingQuery(string query)
+   public static string StemmingQuery(string query)
    {
       string[] query_words = query.Split();
       Stemmer stemmer = new Stemmer();
@@ -129,6 +130,8 @@ public static class Moogle
          query_words[i] = stemmer.Execute(query_words[i]);
          text += query_words[i] + " ";
       }
+
+      return text;
    }
 
    public static (string[], string) FindOperator(string query)
