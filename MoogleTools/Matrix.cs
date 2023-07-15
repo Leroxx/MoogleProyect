@@ -33,7 +33,7 @@ public class Matrix
    public static Matrix WordCount(string[] texts, Dictionary<string, int> dictionary)
    {
       /*** Creando la matriz de los terminos donde cada fila corresponde
-       a un documento y cada fila a los terminos del diccionario ***/
+       a un documento y cada columna a los terminos del diccionario ***/
       double[,] result = new double[texts.Length, dictionary.Count];
       int aux;
 
@@ -54,7 +54,7 @@ public class Matrix
    public static Matrix CalculateTimeFrecuency(Matrix matrix)
    {
       /*** Creando la matriz de los terminos donde cada fila corresponde
-       a un documento y cada fila a los terminos del diccionario ***/
+       a un documento y cada columna a los terminos del diccionario ***/
       double[,] result = new double[matrix.Rows, matrix.Columns];
 
       /// Por cada fila de la matriz (cada documento)

@@ -143,28 +143,31 @@ public class HandleDocs
    private static Dictionary<string, int> GetDictionary(string[] files_texts)
    {
       Dictionary<string, int> words = new Dictionary<string, int>();
-      int aux = 0;
 
       /// Recorriendo el texto de los documentos
       for (int i = 0; i < files_texts.Length; i++)
       {
          string[] file_words = files_texts[i].Split();
 
-         /// A cada palabra del documento se agrega al diccionario si la misma no es encuentra en el
+         Dictionary<string, bool> words_visted = new Dictionary<string, bool>();
+
+         /// Llenando el diccionario con las palabras de los documentos y aumentando la cantidad de documentos en
+         /// los cuales se encuentra esta
          for (int j = 0; j < file_words.Length; j++)
          {
-            if (!words.ContainsKey(file_words[j]) && file_words[j].Length >= 3)
+            if (file_words[j].Length >= 3)
             {
-               for (int k = 0; k < files_texts.Length; k++)
+               if (!words.ContainsKey(file_words[j]))
                {
-                  /// Si la palabra no se encuentra en el diccionario se agrega la mismas
-                  /// Y la cantidad de documentos donde esta aparece, manejado con el entero "aux"
-                  if (files_texts[k].Contains(file_words[j]))
-                     aux++;
+                  words.Add(file_words[j], 1);
+                  words_visted.Add(file_words[j], true);
                }
-               words.Add(file_words[j], aux);
+               else if (!words_visted.ContainsKey(file_words[j]))
+               {
+                  words_visted.Add(file_words[j], true);
+                  words[file_words[j]] += 1;               
+               }
             }
-            aux = 0;
          }
       }
 
