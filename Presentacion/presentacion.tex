@@ -1,0 +1,173 @@
+\documentclass[12pt]{beamer}
+\usetheme{Warsaw}
+
+\usepackage[utf8]{inputenc}
+\usepackage[spanish]{babel}
+\usepackage{verbatim}
+\usepackage{graphicx}
+\setbeamercovered{transparent}
+
+\usepackage{listings}
+
+% Configuración para resaltar la sintaxis de C#
+\lstset{
+	language=[Sharp]C,
+	captionpos=b,
+	frame=lines,
+	numbers=left,
+	numberstyle=\tiny,
+	tabsize=2,
+	basicstyle=\ttfamily\tiny,
+	keywordstyle=\color{blue},
+	stringstyle=\color{red},
+	commentstyle=\color{green},
+	breaklines=true,
+	showspaces=false,
+	showstringspaces=false,
+	literate=*
+	{0}{{\color{red}0}}1
+	{1}{{\color{red}1}}1
+	{2}{{\color{red}2}}1
+	{3}{{\color{red}3}}1
+	{4}{{\color{red}4}}1
+	{5}{{\color{red}5}}1
+	{6}{{\color{red}6}}1
+	{7}{{\color{red}7}}1
+	{8}{{\color{red}8}}1
+	{9}{{\color{red}9}}1
+}
+
+\author{Richard Eugenio Avila Entenza}
+\title{Presentación Moogle}
+\subtitle{}
+\institute{Facultad de Matemática y Computación\\Universidad de la Habana}
+\date{Julio, 2023}
+
+\begin{document}
+	\maketitle
+	
+	\begin{frame}
+		\frametitle{Introducción}
+		
+		Moogle! es una aplicación web desarrollada con teconología .NET Core 6.0 en especifico Blazor como framework para la interfaz gráfica y escrita en el lenguaje C\#. Moogle! tiene como objetivo implemetar un motor de búsqueda capaz de procesar documentos de texto (*.txt).
+		
+	\end{frame}
+	
+	\begin{frame}[fragile]
+		\frametitle{Estructura del Proyecto.}
+		
+		EL proyecto esta dividido en cinco componentes principaless:
+		\begin{enumerate}
+			\item \textbf{MoogleServer:} es un servidor web que renderiza la interfaz gráfica y sirve los resultados.
+			\item \textbf{MoogleEngine:} es una biblioteca de clases donde está implementada la lógica del algoritmo de búsqueda.
+			\item \textbf{MoogleDocs:} es una biblioteca de clases donde se realiza todo el procesamiento de texto de los documentos.
+			\item \textbf{MoogleTools:} es una biblioteca de clases donde se realiza el procesamiento de la vectorización de los documentos y los algoritmos del modelo vectorial.
+			\item \textbf{SpanishStemmer:} es una biblioteca de clases que dada una palabra lleva la misma a su raíz.
+		\end{enumerate}
+	\end{frame}
+	
+	\begin{frame}
+		\frametitle{Operadores de Búsqueda}
+		
+		\begin{enumerate}
+			\item Un símbolo ! delante de una palabra (e.j., algoritmos de búsqueda !ordenación) indica que esa palabra \textbf{no debe aparecer} en ningún documento que sea devuelto.
+			\item Un símbolo  delante de una palabra (e.j., algoritmos de ordenación) indica que esa palabra textbf{tiene que aparecer} en cualquier documento que sea devuelto.
+			\item Cualquier cantidad de símbolos * delante de un término indican que ese término es más importante, por lo que su influencia en el score debe ser mayor que la tendría normalmente (este efecto será acumulativo por cada *, por ejemplo algoritmos de **ordenación indica que la palabra ordenación tiene dos veces más prioridad que algoritmos).
+		\end{enumerate}
+	\end{frame}
+	
+	\begin{frame}[fragile]
+		\frametitle{Algoritmo de Busqueda}
+		\framesubtitle{Procesamiento de textos}
+		
+		Al iniciar el proyecto se llaman la siguientes variables estaticas:
+		
+		\begin{lstlisting}
+		// Carga los docuemtos almacenados en la carpeta Content
+		private static FileInfo[] files = LoadDocs();
+		
+		// Carga los nombre de los archivos
+		public static string[] files_names = GetFilesName();
+		
+		// Carga el texto de lo documentos
+		public static string[] documents_texts = LoadDocumentText();
+					
+		// Lemantiza el teto de los documentos
+		public static string[] stemming_texts = StemmingDocuments(documents_texts);
+		\end{lstlisting}
+	\end{frame}
+	
+	\begin{frame}[fragile]
+		\frametitle{Algoritmo de Busqueda}
+		\framesubtitle{TF-IDF}
+			
+		Una vez obtenido el texto de los documentos lematizados se pasa a calcular el peso de los términos de los documentos TF-IDF.
+			
+		\begin{lstlisting}
+		public static Dictionary<string, int> dictionary = GetDictionary(stemming_texts);
+		\end{lstlisting}
+		
+		GetDictionary almacena todo lo términos de los documentos y su frecuencia relativa con respecto a los documentos.
+	\end{frame}
+	
+	\begin{frame}[fragile]
+		\frametitle{Algoritmo de Busqueda}
+		\framesubtitle{TF-IDF}
+		
+		Para proceder a calcular el tf-idf de los documentos se hacen uso de las siguientes variables.
+		
+		\begin{lstlisting}
+		public static Vector idf_vector = Vector.CalculateIDF(dictionary, stemming_texts.Length);
+		public static Matrix matrix_tf_idf = Matrix.CalculateTimeFrecuency(Matrix.WordCount(stemming_texts, dictionary)) * idf_vector;
+		\end{lstlisting}
+		
+		Este proceso solo se realiza la primera vez que se inicia el servidor y en caso de modificarse algun archivo de la carpeta Content
+	\end{frame}
+	
+	\begin{frame}[fragile]
+		\frametitle{Algoritmo de Busqueda}
+		\framesubtitle{Resultados de la consulta.}
+		
+		Una vez ingresada la consulta del usuario, tambien se pasa a vectorizar la misma, obteniendose el vector de la query.
+		
+		Para calcular su similitud con los documentos se calcula la similitud del coseno con cada uno de ellos, obteniendose el valor del score.
+
+		\begin{lstlisting}
+		Vector query_vector = VectorizingQuery(HandleDocs.dictionary, query, HandleDocs.idf_vector);
+		Matrix cos_similarity = Matrix.CosineSimilarity(HandleDocs.matrix_tf_idf, query_vector);
+		\end{lstlisting}
+		
+		El score puede variar en caso de que se hayan usado operadores en la consulta.
+	\end{frame}
+	
+	\begin{frame}[fragile]
+		\frametitle{Algoritmo de Busqueda}
+		\framesubtitle{Sugerencia.}
+			
+		Finalmente se utiliza la Ditancia de Levenshtein para obtener la sugerencia, en caso de alguna palabra del query no aparezca en los documentos se sugiere una que podría coincidir con los objetivos de la búsqueda, haciendo uso del método GetSuggestion
+			
+		\begin{lstlisting}
+		public static string GetSuggestion(string query, string[] text)
+		{
+			....
+		}
+		\end{lstlisting}
+		
+	\end{frame}
+	
+	\begin{frame}[fragile]
+		\frametitle{Conclusiones}
+		 
+		 A modo de conclusión haciendo uso de Moole! es posible recuperar archivos de textos de una colección de ellos almacenados en la carpeta Content de MoogleServer. Los resultados mostrados son un objeto de tipo SearchItem 
+		 
+		 \begin{lstlisting}
+		 public SearchItem(string title, string snippet, double score)
+		 {
+			 ...
+		 }
+		 \end{lstlisting}
+		 
+		 El usuario podra visualizar el archivo de texto que corresponde con su búsqueda asi como una porcion del texto de dicho archivo. Además de una sugerencia en caso de que la consulta dada no corresponda en su totalidad con los archhivos almacenados.
+	\end{frame}
+	
+\end{document}

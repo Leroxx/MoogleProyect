@@ -1,0 +1,243 @@
+%Preámbulo
+\documentclass[a4paper,12pt]{article}
+\usepackage[left=2.5cm, right=2.5cm, top=3cm, bottom=3cm]{geometry}
+\usepackage{amsmath, amsthm, amssymb}
+\usepackage[spanish]{babel}
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage{cite}
+\usepackage{graphicx}
+\usepackage{url}
+\usepackage{hyperref}
+\hypersetup{
+	colorlinks=true,
+	linkcolor=black,
+	urlcolor=blue,
+	linktoc=all}
+\bibliographystyle{plain}
+
+%Document
+\begin{document}
+	\title{Primer Proyecto de Programación Moogle!}
+	\author{Richard Eugenio Ávila Entenza}
+	\date{Julio, 2023}
+	\maketitle
+	
+	\begin{figure}[h]
+		\center
+		\includegraphics[width=3cm]{matcom.jpg}
+		\label{fig:logo}
+	\end{figure}	
+	\begin{center}
+		\Large Facultad de Matematica y Computacion.
+	\end{center}
+
+	\newpage
+	
+	\begin{abstract}
+Como objetivo del primer proyecto de Programación orientado a los alumnos de primer año de Ciencias de la Computación se desarrolló la implementación de un motor de búsqueda. Para la realización de este proyecto se utilizó una aplicación web desarrollada con tecnología .NET Core 6.0 utilizando Blazor como \emph{framework} y escrita en el lenguaje de programación C\#. Como resultados del mismo se logró un motor de búsqueda capaz de procesar y recuperar archivos de texto dado una consulta introducida por el usuario. Se sugiere continuar con el desarrollo y mejora de la aplicación para lograr un mayor alcance y utilización de la misma.
+	\end{abstract}
+	
+	\newpage
+	\begin{center}
+		\tableofcontents		
+	\end{center}
+
+	\newpage
+	
+	\section{Introducción}\label{sec:introduccion}
+	
+	Este proyecto se realiza con el objetivo de dar solución al problema planteado en el primer proyecto de programación orientado a los alumnos de primer año de la carrera de Ciencias de la Computación de la Facultad de Matemática y Computación. En el mismo se desea implementar un motor de búsqueda que sea capaz de procesar al menos archivos de texto (archivos con extensión .txt). En el presente informe se reflejarán los detalles y algoritmos utilizados para arribar a la solución de este problema. 
+	
+	El proyecto \textbf{Moogle!} Consta de dos componentes principales: \textbf{MoogleServer}, el cual sirve una aplicación web utilizando Blazor como \emph{framework} con la cual el usuario interactuará y mediante la cual los resultados de la búsqueda serán servidos. \textbf{MoogleServer} no será el proyecto del cual se abordará en este informe ya que solo implementa la interfaz gráfica y el problema presentado se centra en la parte funcional de \textbf{Moogle!} para ello se tiene un segundo proyecto \textbf{MoogleEngine}, el cual es el encargado de implementar toda la funcionalidad del motor de búsqueda.
+	
+	\textbf{MoogleEngine} está dividido en tres partes fundamentales las cuales implementan la funcionalidad del proyecto, estos tres fundamentos serán explicados a profundidad en el presente informe.
+	
+	\newpage
+	
+	\section{Desarrollo}\label{sec:desarrollo}
+	
+	La implementación de las funcionalidades de Moogle!  está dividida en tres biblioteca de clases:
+	
+	- \textbf{MoogleDocs:} es una biblioteca de clases donde se realiza todo el procesamiento de texto de los documentos.
+	
+	- \textbf{MoogleTools:} es una biblioteca de clases donde se realiza el procesamiento de la vectorización de los documentos y los algoritmos del modelo vectorial.
+	
+	- \textbf{SpanishStemmer:}  es una biblioteca de clases que dada una palabra lleva la misma a su raíz.
+	
+	\subsection{Procesamiento de los documentos. SpanishStemmer.}\label{sub:procesamiento}
+	
+	Una vez inicializado nuetro proyecto se llaman las siguientes variables estáticas las cuales son las encargadas de procesar todo el texto de los documentos.
+	
+	\begin{verbatim}
+		// Carga los docuemtos almacenados en la carpeta Content
+		private static FileInfo[] files = LoadDocs();
+		
+		// Carga los nombre de los archivos
+		public static string[] files_names = GetFilesName();
+		
+		// Carga el texto de lo documentos
+		public static string[] documents_texts = LoadDocumentText();
+		
+		// Lemantiza el teto de los documentos
+		public static string[] stemming_texts = StemmingDocuments(documents_texts);
+	\end{verbatim}
+	
+	Un Stemming o lemantizador es un proceso que se realiza en recuperacíon de la informacion para llevar cada palabra a ssu raiz o steam, aumentando asi el recall de lo documento. Por ejemplo, una consulta sobre bibliotecas también encuentra documentos en los que solo aparezca bibliotecario porque el stem de las dos palabras es bibliotec.
+	
+	En Moogle! el stemming que se implementó reduce la palabra a su raíz siguiendo una serie de reglas, dichas reglas son ejecutadas sobre cada palabra de los documentos para eliminar los sufijos de la misma, aumentando así el recall del proyecto. Además de esto se eliminan todos los acentos ('á', 'à', 'ä', 'Á', 'À', 'Ä') y los caracteres especiales.
+	
+	\vspace{0.5cm}
+	
+	Ejemplo del resultado de aplicar el Stemming:
+	
+	\vspace{0.3cm}
+	
+	\begin{center}
+		programación $\Rightarrow$ program
+	
+		programador $\Rightarrow$ program
+	
+		programar $\Rightarrow$ program
+	\end{center}
+
+	\subsection{Obtención de los documentos relevantes}\label{sub:obtencion}
+	
+	Una vez aplicado el stemming sobre el contenido de los documentos es necesario recuperar la información de los documentos dado una consulta ingresada por el usuario, para ello se debe determinar la capacidad de los términos para representar el contenido de los documentos en la colección, que permitan identificar cuáles son relevantes o no ante la consulta del usuario. Al valor e índice que es capaz de determinar este extremo se le denomina \emph{peso del término}  o \emph{ponderación del término} y su cálculo implica determinar la Frecuencia de aparición del término TF y la Frecuencia inversa del documento para un término IDF.
+	
+	\vspace{0.3cm}
+	
+	\textbf {Factor TF: Term Frequency = Factor TF: Frecuencia de Aparición de un Término} 
+	
+	\vspace{0.3cm}
+	
+	El factor TF es la suma de todas las ocurrencias o el número de veces que aparece un término en un documento. A este tipo de frecuencia de aparición también se le denomina "Frecuencia de aparición relativa" porque atañe a un documento en concreto y no a toda la colección. En Moogle!  se utiliza la Normalización de frecuencia máxima, que se utiliza para evitar que los términos que aparecen muchas veces en un documento tengan una frecuencia de términos normalizada demasiada alta. Se divide la frecuencia de términos por la frecuencia máxima del cualquier término del documento.
+	
+	\begin{center}
+		$TF(n, D_i) = \frac{tf(n, D_i)}{N}$
+	\end{center}
+			
+	$TF(n, D_i) \rightarrow$ Frecuencia de términos normalizada del término n en el documento $D_i$.
+	
+	$tf(n, D_i) \rightarrow$ Frecuencia de términos del término n en el documento $D_i$.
+	
+	$N \rightarrow$ Máxima frecuencia de términos del término N en el documento $D_i$.
+		
+	\vspace{0.5cm}
+			
+	\begin{center}
+		$tf(n, D_i) = \sum_{D_i}^{n}$
+	\end{center}
+	La fecuencia de aparicion de un término $n$ en un documento $D_i$ es la suma de las ocurrencias de dicho término.
+	
+	\vspace{0.3cm}
+	
+	\textbf {Factor IDF: Inverse Document Frequency = Frecuencia Inversa del Documento para un Término}
+	 
+	\vspace{0.3cm}
+	 
+	El factor IDF de un término es inversamente proporcional al número de documentos en los que aparece dicho término. Esto significa que cuanto menor sea la cantidad de documentos, así como la frecuencia absoluta de aparación del término, mayor será su factor IDF y a la inversa, cuanto mayor sea la frecuencia absoluta relativa a una alta presencia en todos los documentos de la colección, menor será su factor discriminatorio. El factor IDF es único para cada término de la colección.
+	
+	\begin{center}
+		$IDF(n) = log_{10} \left (\frac{N}{DF(n)} \right)$,	$DF(n) \neq 0$
+	\end{center}
+	
+	$DF(n) \rightarrow$ Frecuencia de los documentos para un término $n$.
+	
+	$N \rightarrow$ Número total de documentos de la colección.
+	
+	\vspace{0.3cm}
+	
+	El peso de un término en un documento es el producto de su frecuencia de aparición en dicho documento (TF) y su frecuencia inversa de documento (IDF)
+	
+	\begin{center}
+		$TF$-$IDF(n, d) = TF(n, d) * IDF(n)$
+	\end{center}
+	
+	\textbf {Aquí se presenta un ejemplo de cálculo de TF-IDF sobre tres documentos.}
+	
+	\begin{enumerate}
+		\item{Documento 1: gato perro perro casa}
+		\item{Documento 2: perro casa casa}
+		\item{Documento 3: casa casa casa perro gato}
+	\end{enumerate}
+	
+
+	\begin{center}
+		Calculando el TF de los términos:
+		\vspace{0.50cm}
+		\begin{tabular}{c|c|c|c}
+			\hline
+			Término & TF en documento 1 & TF en documento 2 & TF en documento 3 \\
+			\hline
+			casa & 0.33 & 0.67 & 1.00 \\
+			\hline
+			gato & 1.00 & 0.00 & 0.33\\
+			\hline
+			perro & 1.00 & 0.50 & 0.33\\
+		\end{tabular}
+
+		\vspace{0.50cm}
+
+		Calculando el TF-IDF de los términos:	
+		\vspace{0.50cm}	
+		\begin{tabular}{c|c|c|c}
+			\hline
+			Término & TF-IDF en documento 1 & TF-IDF en documento 2 & TF-IDF en documento 3 \\
+			\hline
+			casa & 0.11 & 0.23 & 0.00 \\
+			\hline
+			gato & 0.48 & 0.00 & 0.16\\
+			\hline
+			perro & 0.48 & 0.12 & 0.08\\
+		\end{tabular}
+	\end{center}
+	
+	Todo este proceso es relizado una vez el proyecto es iniciado utilizando la biblioteca de clases \textbf{MoogleTools}.
+	
+	\begin{verbatim}
+	
+	// Diccionario que contiene el vocabulario de la DB y 
+	la frecuencia de los documentos de cada término
+	public static Dictionary<string, int> dictionary = GetDictionary(stemming_texts);
+	
+	// Obteniendo el vector IDF de los términos.
+	public static Vector idf_vector = Vector.CalculateIDF
+	(dictionary, stemming_texts.Length);
+	
+	// Obteniendo la Matrix TF-IDF de los término en cada documento
+	public static Matrix matrix_tf_idf = Matrix.CalculateTimeFrecuency
+	(Matrix.WordCount(stemming_texts, dictionary)) * idf_vector;
+	\end{verbatim}
+		
+	\vspace{0.50cm}	
+	\textbf {Cosine similarity}
+	
+	Una vez calculado el peso de cada término en los documentos al el usuario ingresar una consulta se realiza el mismo proceso al query ingresado por el usuario, para que la misma sea vectorizada y porder calcular la similitud entre el vector query y los documentos.
+	
+	La similitud del coseno es el coseno del ángulo entre vectores. Los vectores suelen ser distintos a cero y están dentro de un espacio de producto escalar.
+	
+	\begin{center}
+		\begin{equation}
+			cosine similarity = \frac{\vec{A} \cdot \vec{B}}{\|\vec{A} \| \|\vec{B}\|} = \frac{\sum_{i = 1}^{n} A_i B_i}{\sqrt{\sum_{i = 1}^{n} A_i^2 \cdot \sum_{i = 1}^{n} B_i^2}}
+		\end{equation}
+	\end{center}
+	
+	La similitud entre vectores es muy beneficiosa porque, incluso cuando los vectores tienen una distancia euclidiana muy grande, estos podrían tener un ángulo pequeño entre ellos. Cuanto menor es el ángulo, mayor es la similitud entre vectores. La similitud entre vectores es un valor que va a estar limitado por un rango restringido de 0 y 1.
+	
+	Este proceso se realiza llamando el método estático de MoogleTools "Matrix CosineSimilarity(Matrix matrix, Vector vector)" dado el vector del query y la matriz del TF-IDF, obteniendo el score de los docuementos los cuales son ordenados de manera descendentes.
+	
+	Este score puede variar en caso de existir algún operador de búsqueda en la consulta del usuario.
+
+	\subsection{Obtención de la sugerencia}\label{sub:sugerencia}
+	
+	Para generar la sugerencia del usario se uso la distancia de Levenshtein, medida de la diferencia entre dos cadenas de caracteres. Se define como el número mínimo de operaciones de edición (inserción, eliminación o sustitución de un carácter) necesarias para transformar una cadena en otra. El usuario al ingresar palabras que no se encuentren en el vocabulario de los documentos dará una sugerencia asegurando la menor distancia entre las palabras.
+		
+	Para ello sse utiliza el metodo HandleDocs.GetSuggestion en el cual mediante el algoritmo de Levenshtein en caso de alguna palabra del query no aparezca en los documentos se sugiere una que podría coincidir con los objetivos de la búsqueda
+	\newpage
+	
+	\section{Conclusiones}\label{sec:conclusiones}
+	
+	Con Moogle! se logró la implementación de un modelo de recuperación de la informaciób capaz de procear archivos de texto utilizando abilidades de Álgebra lineal y técnicas de recuperación de la información, el proyecto aún tiene muchas cosas por mejorar y optimizar las cuales serán implementadas en el futuro, aún así se logro cumplir con el objetivo propuesto en el Primer Proyecto de Programación de Ciencias de la Computación.
+		
+\end{document}
