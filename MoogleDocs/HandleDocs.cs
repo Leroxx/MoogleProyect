@@ -196,7 +196,7 @@ public class HandleDocs
       /// Por cada palabra palabra guardada en el string operador, verifico si esta contenida en el texto
       for (int i = 0; i < words.Length; i++)
       {
-         string word = words[i].Remove(words[i].IndexOf(a), 1);
+         string word = words[i].Replace(a.ToString(), string.Empty);
          if (text.Contains(word))
             return true;
       }

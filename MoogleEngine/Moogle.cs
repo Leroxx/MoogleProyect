@@ -74,7 +74,7 @@ public static class Moogle
             titles[i] = HandleDocs.LoadTitle(Convert.ToInt32(items[i, 1]));
 
          /// Leyendo los documentos resultantes
-         for (int i = 0; i < result.Rows; i++)
+         for (int i = 0; i < items.Rows; i++)
             operator_text_result[i] = HandleDocs.LoadText(Convert.ToInt32(result[i, 1]));
 
          for (int i = 0; i < items.Rows; i++)
